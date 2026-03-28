@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sasuke Academy - Đề 4</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+            background-color: #f8fafc;
+        }
+        .slide-enter { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        /* Ngăn chặn hiệu ứng highlight xanh khi chạm trên iOS */
+        * { -webkit-tap-highlight-color: transparent; }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 0.85rem;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+        .stat-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // Tăng kích thước và độ dày mũi tên để hiển thị rõ trên iPhone
+        const ChevronLeft = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        );
+        const ChevronRight = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+        const Eye = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+
+        const App = () => {
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const [selectedIdx, setSelectedIdx] = useState(null);
+            const [answers, setAnswers] = useState({});
+
+            const slides = [
+                { type: 'cover', title: 'BỘ ĐỀ SỐ 4', subtitle: 'Sasuke Academy Kindergarten', org: 'Sasuke Academy' },
+                { id: 1, question: 'Loại quả nào sau đây có vị chua?', options: [{ label: 'a', text: 'Chuối' }, { label: 'b', text: 'Chanh', isCorrect: true }, { label: 'c', text: 'Đu đủ' }] },
+                { id: 2, question: 'Sài Gòn là tên gọi khác của thành phố nào?', options: [{ label: 'a', text: 'TP Vinh' }, { label: 'b', text: 'TP Đà Nẵng' }, { label: 'c', text: 'TP Hồ Chí Minh', isCorrect: true }] },
+                { id: 3, question: 'Điền số thích hợp: 2 + ... = 6', options: [{ label: 'a', text: '3' }, { label: 'b', text: '4', isCorrect: true }, { label: 'c', text: '5' }] },
+                { id: 4, question: 'Nga có 5 viên kẹo, mẹ cho Nga thêm 4 viên kẹo nữa. Hỏi Nga có tất cả bao nhiêu viên kẹo?', options: [{ label: 'a', text: '8' }, { label: 'b', text: '9', isCorrect: true }, { label: 'c', text: '10' }] },
+                { id: 5, question: 'Hình ảnh trẻ em mặc áo dài đi chúc Tết, hoa mai hoa đào nở rộ là mùa gì?', options: [{ label: 'a', text: 'Mùa xuân', isCorrect: true }, { label: 'b', text: 'Mùa hè' }, { label: 'c', text: 'Mùa đông' }] },
+                { id: 6, question: 'Số lớn nhất có 1 chữ số là:', options: [{ label: 'a', text: '5' }, { label: 'b', text: '10' }, { label: 'c', text: '9', isCorrect: true }] },
+                { id: 7, question: 'Đèn giao thông màu xanh lá cây báo hiệu cho chúng ta:', options: [{ label: 'a', text: 'Dừng lại' }, { label: 'b', text: 'Được đi', isCorrect: true }, { label: 'c', text: 'Chậm lại' }] },
+                { id: 8, question: 'Chúng ta nên làm gì để bảo vệ răng miệng?', options: [{ label: 'a', text: 'Đánh răng ít nhất 2 lần 1 ngày', isCorrect: true }, { label: 'b', text: 'Ăn kẹo trước khi đi ngủ' }, { label: 'c', text: 'Không đánh răng' }] },
+                { id: 9, question: 'Răng trẻ em được gọi là răng gì?', options: [{ label: 'a', text: 'Răng sữa', isCorrect: true }, { label: 'b', text: 'Răng giả' }, { label: 'c', text: 'Răng khôn' }] },
+                { id: 10, question: 'Tháng nào trong năm có 28 hoặc 29 ngày?', options: [{ label: 'a', text: 'Tháng 1' }, { label: 'b', text: 'Tháng 2', isCorrect: true }, { label: 'c', text: 'Tháng 3' }] },
+                { id: 11, question: 'Loài vật nào sau đây không thuộc loài cá?', options: [{ label: 'a', text: 'Cá sấu', isCorrect: true }, { label: 'b', text: 'Cá thác lác' }, { label: 'c', text: 'Cá hề' }] },
+                { id: 12, question: 'Số lớn nhất có 2 chữ số là:', options: [{ label: 'a', text: '89' }, { label: 'b', text: '99', isCorrect: true }, { label: 'c', text: '90' }] },
+                { id: 13, question: 'Dãy số nào sau đây gồm toàn số chẵn?', options: [{ label: 'a', text: '2, 8, 12, 16', isCorrect: true }, { label: 'b', text: '6, 7, 9, 11' }, { label: 'c', text: '8, 9, 12, 15' }] },
+                { id: 14, question: 'Số bé nhất có 2 chữ số giống nhau là:', options: [{ label: 'a', text: '55' }, { label: 'b', text: '15' }, { label: 'c', text: '11', isCorrect: true }] },
+                { id: 15, question: 'Chữ "h" gồm những nét nào?', options: [{ label: 'a', text: 'Nét khuyết trên và nét móc 2 đầu', isCorrect: true }, { label: 'b', text: 'Nét khuyết trên và nét cong kín' }, { label: 'c', text: 'Nét khuyết trên và nét ngang' }] },
+                { id: 16, question: 'Con vật nào dưới đây thường được nuôi trong gia đình?', options: [{ label: 'a', text: 'Con sư tử' }, { label: 'b', text: 'Con hổ' }, { label: 'c', text: 'Con chó', isCorrect: true }] },
+                { id: 17, question: 'Trong câu chuyện "Thánh Gióng", Thánh Gióng đã nhổ cây gì để đánh giặc?', options: [{ label: 'a', text: 'Cây chuối' }, { label: 'b', text: 'Cây tre', isCorrect: true }, { label: 'c', text: 'Cây xoài' }] },
+                { id: 18, question: '"Mời mẹ ngồi im lặng, Để bác sĩ khám cho" được trích trong bài thơ nào?', options: [{ label: 'a', text: 'Làm họa sĩ' }, { label: 'b', text: 'Làm nghề như bố' }, { label: 'c', text: 'Làm bác sĩ', isCorrect: true }] },
+                { id: 19, question: 'Khi bị chảy máu cam, bé cần làm gì?', options: [{ label: 'a', text: 'Để tự chảy' }, { label: 'b', text: 'Cúi đầu, dùng ngón tay ấn vào 2 cánh mũi', isCorrect: true }, { label: 'c', text: 'Ngửa đầu lên' }] },
+                { id: 20, question: 'Chú Cuội, chị Hằng thường xuất hiện vào ngày lễ nào?', options: [{ label: 'a', text: 'Noel' }, { label: 'b', text: 'Tết trung thu', isCorrect: true }, { label: 'c', text: 'Tết nguyên đán' }] },
+                { id: 21, question: 'Bác Hồ sinh vào ngày tháng nào?', options: [{ label: 'a', text: '19 tháng 5', isCorrect: true }, { label: 'b', text: '1 tháng 6' }, { label: 'c', text: '30 tháng 4' }] },
+                { id: 22, question: 'Khi thấy bạn ngã xuống nước, em sẽ làm gì?', options: [{ label: 'a', text: 'Chạy đi gọi người lớn giúp', isCorrect: true }, { label: 'b', text: 'Đứng khóc' }, { label: 'c', text: 'Đứng nhìn bạn' }] },
+                { id: 23, question: 'Hoa Muồng Hoàng Yến là Quốc hoa của nước nào?', options: [{ label: 'a', text: 'Campuchia' }, { label: 'b', text: 'Việt Nam' }, { label: 'c', text: 'Thái Lan', isCorrect: true }] },
+                { id: 24, question: 'Vòng đeo tay thường có dạng hình gì?', options: [{ label: 'a', text: 'Tam giác' }, { label: 'b', text: 'Hình vuông' }, { label: 'c', text: 'Hình tròn', isCorrect: true }] },
+                { id: 25, question: 'Đồ vật nào sau đây có thể nổi trên mặt nước?', options: [{ label: 'a', text: 'Thìa inox' }, { label: 'b', text: 'Hòn bi' }, { label: 'c', text: 'Miếng xốp', isCorrect: true }] },
+                { id: 26, question: 'Điền dấu thích hợp: 2 + 4 ... 4 + 5', options: [{ label: 'a', text: '>' }, { label: 'b', text: '<', isCorrect: true }, { label: 'c', text: '=' }] },
+                { id: 27, question: 'Câu đố: Cây gì không lá, không hoa, sáng đêm sinh nhật cả nhà vây quanh?', options: [{ label: 'a', text: 'Cây cầu' }, { label: 'b', text: 'Cây nến', isCorrect: true }, { label: 'c', text: 'Cây ổi' }] },
+                { id: 28, question: 'Cái gì đập thì sống mà không đập thì chết?', options: [{ label: 'a', text: 'Con ruồi' }, { label: 'b', text: 'Cây pháo' }, { label: 'c', text: 'Quả tim', isCorrect: true }] },
+                { id: 29, question: 'Trái Đất của chúng ta có hình gì?', options: [{ label: 'a', text: 'Hình tròn' }, { label: 'b', text: 'Hình cầu' }, { label: 'c', text: 'Hình cầu dẹt', isCorrect: true }] },
+                { id: 30, question: 'Dãy số nào sau đây gồm toàn số lẻ?', options: [{ label: 'a', text: '2, 4, 6, 9' }, { label: 'b', text: '3, 7, 9, 11, 13', isCorrect: true }, { label: 'c', text: '12, 14, 17, 19' }] },
+                { type: 'end', title: 'XUẤT SẮC!', message: 'Bé đã hoàn thành 30 câu hỏi của Bộ Đề 4.' }
+            ];
+
+            const questionSlides = slides.filter(slide => slide.id);
+            const totalQuestions = questionSlides.length;
+            const answeredCount = Object.keys(answers).length;
+            const currentCorrect = questionSlides.reduce((sum, slide) => {
+                const userAnswer = answers[slide.id];
+                if (userAnswer === undefined) return sum;
+                const correctIndex = slide.options.findIndex(opt => opt.isCorrect);
+                return sum + (userAnswer === correctIndex ? 1 : 0);
+            }, 0);
+            const percentCorrect = totalQuestions ? Math.round((currentCorrect / totalQuestions) * 100) : 0;
+
+            const handleNext = useCallback(() => {
+                if (currentSlide < slides.length - 1) {
+                    setCurrentSlide(prev => prev + 1);
+                    setShowAnswer(false);
+                    setSelectedIdx(null);
+                    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                }
+            }, [currentSlide, slides.length]);
+
+            const handlePrev = useCallback(() => {
+                if (currentSlide > 0) {
+                    setCurrentSlide(prev => prev - 1);
+                    setShowAnswer(false);
+                    setSelectedIdx(null);
+                    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                }
+            }, [currentSlide]);
+
+            const handleSelect = (idx) => {
+                if (showAnswer) return;
+                if (slide && slide.id) {
+                    setAnswers(prev => ({ ...prev, [slide.id]: idx }));
+                }
+                setSelectedIdx(idx);
+                setShowAnswer(true);
+            };
+
+            const toggleAnswer = () => {
+                setShowAnswer(prev => !prev);
+                if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            };
+
+            useEffect(() => {
+                const handleKey = (e) => {
+                    if (e.key === ' ') { e.preventDefault(); toggleAnswer(); }
+                    if (e.key === 'ArrowRight') handleNext();
+                    if (e.key === 'ArrowLeft') handlePrev();
+                };
+                window.addEventListener('keydown', handleKey);
+                return () => window.removeEventListener('keydown', handleKey);
+            }, [handleNext, handlePrev]);
+
+            const slide = slides[currentSlide];
+
+            useEffect(() => {
+                if (slide && slide.id && answers[slide.id] !== undefined) {
+                    setSelectedIdx(answers[slide.id]);
+                } else {
+                    setSelectedIdx(null);
+                }
+                setShowAnswer(false);
+            }, [currentSlide]);
+
+            return (
+                <div className="fixed inset-0 bg-slate-50 flex flex-col items-center justify-center p-4">
+                    <div className="relative w-full h-full max-w-5xl max-h-[90vh] bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col transition-all">
+                        {/* Progress Bar */}
+                        <div className="absolute top-0 left-0 h-1.5 bg-red-100 w-full z-10">
+                            <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }} />
+                        </div>
+
+                        <div className="flex-1 p-6 md:p-12 flex flex-col justify-center slide-enter overflow-y-auto" key={currentSlide}>
+                            <div className="stats-bar">
+                                <div className="stat-card">
+                                    <div className="stat-label">Tổng số câu</div>
+                                    <div className="stat-value">{totalQuestions}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">Đã làm</div>
+                                    <div className="stat-value">{answeredCount}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">Đúng hiện tại</div>
+                                    <div className="stat-value">{currentCorrect}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">Tỷ lệ đúng</div>
+                                    <div className="stat-value">{percentCorrect}%</div>
+                                </div>
+                            </div>
+                            {slide.type === 'cover' ? (
+                                <div className="text-center space-y-6">
+                                    <h2 className="text-red-500 font-bold tracking-widest text-lg uppercase">{slide.org}</h2>
+                                    <h1 className="text-4xl md:text-8xl font-black text-slate-900 leading-none">{slide.title}</h1>
+                                    <p className="text-xl md:text-3xl text-slate-400 italic">{slide.subtitle}</p>
+                                </div>
+                            ) : slide.type === 'end' ? (
+                                <div className="text-center space-y-8">
+                                    <h1 className="text-6xl font-black text-green-600">XUẤT SẮC!</h1>
+                                    <p className="text-2xl text-slate-500">{slide.message}</p>
+                                    <button onClick={() => { setCurrentSlide(0); setShowAnswer(false); setSelectedIdx(null); setAnswers({}); }} className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold text-xl active:scale-95">LÀM LẠI</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold inline-block uppercase">CÂU {slide.id}</span>
+                                        <h2 className="text-xl md:text-4xl font-bold text-slate-800 leading-snug">{slide.question}</h2>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        {slide.options.map((opt, i) => {
+                                            const isSelected = selectedIdx === i;
+                                            const isCorrect = opt.isCorrect;
+                                            let style = "bg-slate-50 border-slate-100 text-slate-700";
+                                            let icon = "bg-white text-slate-300";
+
+                                            if (showAnswer) {
+                                                if (isCorrect) {
+                                                    style = "bg-green-500 border-green-600 text-white shadow-lg";
+                                                    icon = "bg-white text-green-600";
+                                                } else if (isSelected) {
+                                                    style = "bg-red-500 border-red-600 text-white";
+                                                    icon = "bg-white text-red-600";
+                                                } else {
+                                                    style = "bg-slate-50 border-slate-100 text-slate-300 opacity-40";
+                                                }
+                                            }
+
+                                            return (
+                                                <div key={i} onClick={() => handleSelect(i)} className={`p-4 md:p-6 rounded-2xl border-4 flex items-center transition-all cursor-pointer active:scale-[0.98] ${style}`}>
+                                                    <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center font-black text-lg md:text-2xl mr-4 md:mr-6 flex-shrink-0 transition-all ${icon}`}>
+                                                        {opt.label.toUpperCase()}
+                                                    </div>
+                                                    <span className="text-lg md:text-3xl font-bold leading-tight">{opt.text}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Navigation Controls - SỬA LỖI NÚT ĐIỀU HƯỚNG */}
+                        <div className="bg-white border-t border-slate-100 p-4 md:p-8 flex items-center justify-between w-full">
+                            {/* Nút QUAY LẠI */}
+                            <button 
+                                onClick={handlePrev} 
+                                disabled={currentSlide === 0} 
+                                className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-slate-100 rounded-2xl text-slate-600 disabled:opacity-10 active:scale-90 flex-shrink-0 shadow-sm"
+                            >
+                                <ChevronLeft/>
+                            </button>
+
+                            {/* Cụm trung tâm: Số trang & Nút xem đáp án */}
+                            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
+                                <span className="text-slate-400 font-bold tabular-nums text-xs md:text-xl">
+                                    {currentSlide + 1} / {slides.length}
+                                </span>
+                                {!slide.type && (
+                                    <button 
+                                        onClick={toggleAnswer} 
+                                        className={`px-4 md:px-8 h-10 md:h-16 rounded-xl md:rounded-2xl font-black flex items-center text-[10px] md:text-xl transition-all shadow-md active:scale-90 ${showAnswer ? 'bg-orange-500 text-white' : 'bg-slate-900 text-white'}`}
+                                    >
+                                        <Eye/>
+                                        <span className="ml-1 md:ml-2 whitespace-nowrap">{showAnswer ? 'ẨN ĐÁP ÁN' : 'XEM ĐÁP ÁN'}</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Nút TIẾP THEO - ĐÃ THAY Ô ĐỎ BẰNG MŨI TÊN */}
+                            <button 
+                                onClick={handleNext} 
+                                disabled={currentSlide === slides.length - 1} 
+                                className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-slate-100 rounded-2xl text-slate-600 disabled:opacity-10 active:scale-90 flex-shrink-0 shadow-sm"
+                            >
+                                <ChevronRight/>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sasuke Academy - Đề 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; background-color: #f8fafc; }
+        .slide-enter { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        * { -webkit-tap-highlight-color: transparent; }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 0.85rem;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+        .stat-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+        const ChevronLeft = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>;
+        const ChevronRight = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>;
+        const Eye = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+
+        const App = () => {
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const [selectedIdx, setSelectedIdx] = useState(null);
+            const [answers, setAnswers] = useState({});
+
+            const slides = [
+                { type: 'cover', title: 'BỘ ĐỀ SỐ 2', subtitle: 'Sasuke Academy Kindergarten', org: 'Sasuke Academy' },
+                { id: 1, question: 'Hãy chọn phép tính đúng:', options: [{ label: 'a', text: '5 + 2 = 5' }, { label: 'b', text: '7 + 0 = 0' }, { label: 'c', text: '3 + 4 = 7', isCorrect: true }] },
+                { id: 2, question: 'Trên cành có 9 con chim, bay đi 4 con. Hỏi còn mấy con?', options: [{ label: 'a', text: '5 con', isCorrect: true }, { label: 'b', text: '6 con' }, { label: 'c', text: '4 con' }] },
+                { id: 3, question: 'Chọn kết quả đúng: 9 - 6 + 3 = ?', options: [{ label: 'a', text: '3' }, { label: 'b', text: '6', isCorrect: true }, { label: 'c', text: '5' }] },
+                { id: 4, question: 'Vần uôi do mấy âm ghép lại:', options: [{ label: 'a', text: '4 âm' }, { label: 'b', text: '2 âm' }, { label: 'c', text: '3 âm', isCorrect: true }] },
+                { id: 5, question: 'Ngh chỉ viết trước các chữ:', options: [{ label: 'a', text: 'a, o, u' }, { label: 'b', text: 'i, y, ê' }, { label: 'c', text: 'e, ê, i', isCorrect: true }] },
+                { id: 6, question: 'Bé cần làm gì để giữ gìn sức khỏe trong mùa dịch:', options: [{ label: 'a', text: 'Ăn nhiều' }, { label: 'b', text: 'Ăn uống đủ chất, tập thể thao, ngủ đúng giờ', isCorrect: true }, { label: 'c', text: 'Đá banh, nhảy dây' }] },
+                { id: 7, question: 'Đâu là hành vi đúng:', options: [{ label: 'a', text: 'Bẻ cành hái hoa' }, { label: 'b', text: 'Nhặt rác, phân loại rác đúng nơi quy định', isCorrect: true }, { label: 'c', text: 'Xả nước tràn lan' }] },
+                { id: 8, question: 'Bé đi sang đường cần đi ở vị trí nào?', options: [{ label: 'a', text: 'Đi dưới lòng đường' }, { label: 'b', text: 'Đi nơi có vạch kẻ trắng dành cho người đi bộ', isCorrect: true }, { label: 'c', text: 'Trên vỉa hè' }] },
+                { id: 9, question: 'Để giữ trường lớp xanh, sạch đẹp:', options: [{ label: 'a', text: 'Không vứt rác' }, { label: 'b', text: 'Không bứt hoa' }, { label: 'c', text: 'Cả hai ý trên đều đúng.', isCorrect: true }] },
+                { id: 10, question: 'Để tránh ngộ độc thức ăn, em cần:', options: [{ label: 'a', text: 'Ăn quà vặt' }, { label: 'b', text: 'Ăn chín, uống sôi', isCorrect: true }, { label: 'c', text: 'Ăn thức ăn lâu ngày' }] },
+                { id: 11, question: 'Thức ăn giúp răng tốt:', options: [{ label: 'a', text: 'Bánh, kẹo' }, { label: 'b', text: 'Trái cây, sữa', isCorrect: true }, { label: 'c', text: 'Nước ngọt' }] },
+                { id: 12, question: 'Ngậm nước có chứa fluoride để:', options: [{ label: 'a', text: 'Để sạch miệng' }, { label: 'b', text: 'Để răng mọc nhanh' }, { label: 'c', text: 'Để ngừa sâu răng', isCorrect: true }] },
+                { id: 13, question: 'Người làm nghề cày cấy, trồng trọt trên đồng ruộng gọi là:', options: [{ label: 'a', text: 'Công nhân.' }, { label: 'b', text: 'Kĩ sư.' }, { label: 'c', text: 'Nông dân', isCorrect: true }] },
+                { id: 14, question: 'Hồ Gươm ở địa danh nào của nước ta?', options: [{ label: 'a', text: 'Huế' }, { label: 'b', text: 'Hồ Chí Minh' }, { label: 'c', text: 'Hà Nội', isCorrect: true }] },
+                { id: 15, question: 'Con trâu con gọi là con?', options: [{ label: 'a', text: 'Con nghé', isCorrect: true }, { label: 'b', text: 'Con trâu bé' }, { label: 'c', text: 'Trâu chấu' }] },
+                { id: 16, question: 'Bác sĩ chuyên khoa răng gọi là gì?', options: [{ label: 'a', text: 'Bác sĩ nha khoa', isCorrect: true }, { label: 'b', text: 'Bác sĩ nhãn khoa' }, { label: 'c', text: 'Bác sĩ nhi khoa' }] },
+                { id: 17, question: 'Cá voi thở bằng gì?', options: [{ label: 'a', text: 'Phổi', isCorrect: true }, { label: 'b', text: 'Mang' }, { label: 'c', text: 'Da' }] },
+                { id: 18, question: 'Tết cổ truyền Việt Nam là?', options: [{ label: 'a', text: 'Đoan ngọ' }, { label: 'b', text: 'Trung thu' }, { label: 'c', text: 'Tết Nguyên đán', isCorrect: true }] },
+                { id: 19, question: 'Khi tham gia giao thông đường bộ đèn tín hiệu nào bật lên thì sẽ dừng lại?', options: [{ label: 'a', text: 'Đèn đỏ', isCorrect: true }, { label: 'b', text: 'Đèn vàng' }, { label: 'c', text: 'Đèn xanh' }] },
+                { id: 20, question: 'Tết trung thu còn được gọi là ngày tết gì:', options: [{ label: 'a', text: 'Tết đoàn viên, tết trông trăng, tết thiếu nhi', isCorrect: true }, { label: 'b', text: 'Tết nguyên tiêu' }, { label: 'c', text: 'Tết chú Cuội – chị Hằng' }] },
+                { type: 'end', title: 'XUẤT SẮC!', message: 'Bé đã hoàn thành 20 câu hỏi của Bộ Đề 2.' }
+            ];
+
+            const questionSlides = slides.filter(slide => slide.id);
+            const totalQuestions = questionSlides.length;
+            const answeredCount = Object.keys(answers).length;
+            const currentCorrect = questionSlides.reduce((sum, slide) => {
+                const userAnswer = answers[slide.id];
+                if (userAnswer === undefined) return sum;
+                const correctIndex = slide.options.findIndex(opt => opt.isCorrect);
+                return sum + (userAnswer === correctIndex ? 1 : 0);
+            }, 0);
+            const percentCorrect = totalQuestions ? Math.round((currentCorrect / totalQuestions) * 100) : 0;
+
+            const handleNext = useCallback(() => { if (currentSlide < slides.length - 1) { setCurrentSlide(prev => prev + 1); setShowAnswer(false); setSelectedIdx(null); if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); } }, [currentSlide, slides.length]);
+            const handlePrev = useCallback(() => { if (currentSlide > 0) { setCurrentSlide(prev => prev - 1); setShowAnswer(false); setSelectedIdx(null); if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); } }, [currentSlide]);
+            const toggleAnswer = () => { setShowAnswer(prev => !prev); if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); };
+            const handleSelect = (idx) => { if (showAnswer) return; setSelectedIdx(idx); setShowAnswer(true); };
+
+            useEffect(() => {
+                const handleKey = (e) => { if (e.key === ' ') { e.preventDefault(); toggleAnswer(); } if (e.key === 'ArrowRight') handleNext(); if (e.key === 'ArrowLeft') handlePrev(); };
+                window.addEventListener('keydown', handleKey);
+                return () => window.removeEventListener('keydown', handleKey);
+            }, [handleNext, handlePrev]);
+
+            const slide = slides[currentSlide];
+
+            useEffect(() => {
+                if (slide && slide.id && answers[slide.id] !== undefined) {
+                    setSelectedIdx(answers[slide.id]);
+                } else {
+                    setSelectedIdx(null);
+                }
+                setShowAnswer(false);
+            }, [currentSlide]);
+
+            return (
+                <div className="fixed inset-0 bg-slate-50 flex flex-col items-center justify-center p-4">
+                    <div className="relative w-full h-full max-w-5xl max-h-[85vh] bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col transition-all">
+                        <div className="absolute top-0 left-0 h-1.5 bg-red-100 w-full z-10">
+                            <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }} />
+                        </div>
+                        <div className="flex-1 p-6 md:p-12 flex flex-col justify-center slide-enter overflow-y-auto" key={currentSlide}>
+                            <div className="stats-bar">
+                                <div className="stat-card">
+                                    <div className="stat-label">Tổng số câu</div>
+                                    <div className="stat-value">{totalQuestions}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">Đã làm</div>
+                                    <div className="stat-value">{answeredCount}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">Đúng hiện tại</div>
+                                    <div className="stat-value">{currentCorrect}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-label">Tỷ lệ đúng</div>
+                                    <div className="stat-value">{percentCorrect}%</div>
+                                </div>
+                            </div>
+                            {slide.type === 'cover' ? (
+                                <div className="text-center space-y-6">
+                                    <h2 className="text-red-500 font-bold tracking-widest text-lg uppercase">{slide.org}</h2>
+                                    <h1 className="text-4xl md:text-8xl font-black text-slate-900 leading-none">{slide.title}</h1>
+                                    <p className="text-xl md:text-3xl text-slate-400 italic">{slide.subtitle}</p>
+                                </div>
+                            ) : slide.type === 'end' ? (
+                                <div className="text-center space-y-8">
+                                    <h1 className="text-6xl font-black text-green-600">XUẤT SẮC!</h1>
+                                    <p className="text-2xl text-slate-500">{slide.message}</p>
+                                    <button onClick={() => { setCurrentSlide(0); setShowAnswer(false); setSelectedIdx(null); setAnswers({}); }} className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold text-xl active:scale-95">LÀM LẠI</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold inline-block uppercase">CÂU {slide.id}</span>
+                                        <h2 className="text-xl md:text-4xl font-bold text-slate-800 leading-snug">{slide.question}</h2>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        {slide.options.map((opt, i) => {
+                                            const isSelected = selectedIdx === i; const isCorrect = opt.isCorrect;
+                                            let style = "bg-slate-50 border-slate-100 text-slate-700"; let icon = "bg-white text-slate-300";
+                                            if (showAnswer) {
+                                                if (isCorrect) { style = "bg-green-500 border-green-600 text-white shadow-lg"; icon = "bg-white text-green-600"; }
+                                                else if (isSelected) { style = "bg-red-500 border-red-600 text-white"; icon = "bg-white text-red-600"; }
+                                                else { style = "bg-slate-50 border-slate-100 text-slate-300 opacity-40"; }
+                                            }
+                                            return (
+                                                <div key={i} onClick={() => handleSelect(i)} className={`p-4 md:p-6 rounded-2xl border-4 flex items-center transition-all cursor-pointer active:scale-[0.98] ${style}`}>
+                                                    <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center font-black text-lg md:text-2xl mr-4 md:mr-6 flex-shrink-0 transition-all ${icon}`}>{opt.label.toUpperCase()}</div>
+                                                    <span className="text-lg md:text-3xl font-bold leading-tight">{opt.text}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="bg-white border-t border-slate-100 p-4 md:p-8 flex items-center justify-between w-full">
+                            <button onClick={handlePrev} disabled={currentSlide === 0} className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-slate-100 rounded-2xl text-slate-600 disabled:opacity-10 active:scale-90 flex-shrink-0 shadow-sm"><ChevronLeft/></button>
+                            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
+                                <span className="text-slate-400 font-bold tabular-nums text-xs md:text-xl">{currentSlide + 1} / {slides.length}</span>
+                                {!slide.type && <button onClick={toggleAnswer} className={`px-4 md:px-8 h-10 md:h-16 rounded-xl md:rounded-2xl font-black flex items-center text-[10px] md:text-xl transition-all shadow-md active:scale-90 ${showAnswer ? 'bg-orange-500 text-white' : 'bg-slate-900 text-white'}`}><Eye/><span className="ml-1 md:ml-2 whitespace-nowrap">{showAnswer ? 'ẨN ĐÁP ÁN' : 'XEM ĐÁP ÁN'}</span></button>}
+                            </div>
+                            <button onClick={handleNext} disabled={currentSlide === slides.length - 1} className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-slate-100 rounded-2xl text-slate-600 disabled:opacity-10 active:scale-90 flex-shrink-0 shadow-sm"><ChevronRight/></button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
